@@ -104,6 +104,7 @@ variable "execute_command_log_retention_days" {
   }
 }
 
+
 # Security Group Configuration
 variable "ecs_dynamic_port_range_from" {
   description = "Starting port for ECS dynamic port range"

@@ -8,6 +8,7 @@ resource "aws_cloudwatch_log_group" "ecs_execute_command" {
   })
 }
 
+
 resource "aws_ecs_cluster" "main" {
   name = var.cluster_name
 
@@ -60,40 +61,37 @@ resource "aws_security_group" "ecs_instance" {
   })
 }
 
-resource "aws_ecs_cluster_capacity_providers" "main" {
+# Fargate Capacity Providers
+resource "aws_ecs_cluster_capacity_providers" "fargate" {
+  count        = contains(var.launch_types, "FARGATE") ? 1 : 0
   cluster_name = aws_ecs_cluster.main.name
 
-  capacity_providers = compact([
-    contains(var.launch_types, "FARGATE") ? "FARGATE" : "",
-    contains(var.launch_types, "FARGATE") ? "FARGATE_SPOT" : "",
-    contains(var.launch_types, "EC2") ? aws_ecs_capacity_provider.ec2[0].name : ""
-  ])
+  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
 
-  dynamic "default_capacity_provider_strategy" {
-    for_each = contains(var.launch_types, "FARGATE") ? [1] : []
-    content {
-      capacity_provider = "FARGATE"
-      weight            = var.fargate_capacity_provider_weight
-      base              = var.fargate_capacity_provider_base
-    }
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE"
+    weight            = var.fargate_capacity_provider_weight
+    base              = var.fargate_capacity_provider_base
   }
 
-  dynamic "default_capacity_provider_strategy" {
-    for_each = contains(var.launch_types, "FARGATE") ? [1] : []
-    content {
-      capacity_provider = "FARGATE_SPOT"
-      weight            = var.fargate_spot_capacity_provider_weight
-      base              = var.fargate_spot_capacity_provider_base
-    }
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = var.fargate_spot_capacity_provider_weight
+    base              = var.fargate_spot_capacity_provider_base
   }
+}
 
-  dynamic "default_capacity_provider_strategy" {
-    for_each = contains(var.launch_types, "EC2") ? [1] : []
-    content {
-      capacity_provider = aws_ecs_capacity_provider.ec2[0].name
-      weight            = var.ec2_capacity_provider_weight
-      base              = var.ec2_capacity_provider_base
-    }
+# EC2 Capacity Provider
+resource "aws_ecs_cluster_capacity_providers" "ec2" {
+  count        = contains(var.launch_types, "EC2") ? 1 : 0
+  cluster_name = aws_ecs_cluster.main.name
+
+  capacity_providers = [aws_ecs_capacity_provider.ec2[0].name]
+
+  default_capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.ec2[0].name
+    weight            = var.ec2_capacity_provider_weight
+    base              = var.ec2_capacity_provider_base
   }
 
   depends_on = [

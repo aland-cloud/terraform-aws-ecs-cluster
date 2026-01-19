@@ -32,6 +32,12 @@ resource "aws_iam_role_policy_attachment" "ecs_instance_ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy_attachment" "ecs_instance_cloudwatch_logs_policy" {
+  count      = contains(var.launch_types, "EC2") ? 1 : 0
+  role       = aws_iam_role.ecs_instance_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
   count = contains(var.launch_types, "EC2") ? 1 : 0
   name  = "${var.cluster_name}-ecs-instance-profile"

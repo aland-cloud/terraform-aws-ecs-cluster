@@ -18,15 +18,6 @@ output "ec2_capacity_provider_arn" {
   value       = contains(var.launch_types, "EC2") ? aws_ecs_capacity_provider.ec2[0].arn : null
 }
 
-output "capacity_providers" {
-  description = "List of capacity providers associated with the cluster"
-  value = compact([
-    contains(var.launch_types, "FARGATE") ? "FARGATE" : "",
-    contains(var.launch_types, "FARGATE") ? "FARGATE_SPOT" : "",
-    contains(var.launch_types, "EC2") ? aws_ecs_capacity_provider.ec2[0].name : ""
-  ])
-}
-
 output "autoscaling_group_arn" {
   description = "ARN of the Auto Scaling Group (EC2 capacity provider only)"
   value       = contains(var.launch_types, "EC2") ? aws_autoscaling_group.ecs[0].arn : null
