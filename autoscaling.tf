@@ -42,7 +42,7 @@ resource "aws_launch_template" "ecs" {
   metadata_options {
     http_endpoint = "enabled"
     http_tokens   = "required"
-    http_put_response_hop_limit = 2
+    http_put_response_hop_limit = var.metadata_http_put_response_hop_limit
   }
 
   tags = merge(var.tags, {
@@ -55,8 +55,8 @@ resource "aws_autoscaling_group" "ecs" {
   name                = "${var.cluster_name}-ecs-asg"
   vpc_zone_identifier = var.subnet_ids
   target_group_arns   = []
-  health_check_type   = "ECS"
-  health_check_grace_period = 300
+  health_check_type   = "EC2"
+  health_check_grace_period = var.asg_health_check_grace_period
 
   min_size         = var.ec2_min_capacity
   max_size         = var.ec2_max_capacity
@@ -74,8 +74,8 @@ resource "aws_autoscaling_group" "ecs" {
   instance_refresh {
     strategy = "Rolling"
     preferences {
-      min_healthy_percentage = 50
-      instance_warmup        = 300
+      min_healthy_percentage = var.asg_instance_refresh_min_healthy_percentage
+      instance_warmup        = var.instance_warmup_period
     }
   }
 
@@ -114,7 +114,7 @@ resource "aws_autoscaling_lifecycle_hook" "ecs_instance_terminating" {
   name                   = "${var.cluster_name}-ecs-terminating-hook"
   autoscaling_group_name = aws_autoscaling_group.ecs[0].name
   default_result         = "ABANDON"
-  heartbeat_timeout      = 900
+  heartbeat_timeout      = var.lifecycle_hook_heartbeat_timeout
   lifecycle_transition   = "autoscaling:EC2_INSTANCE_TERMINATING"
 
   notification_metadata = jsonencode({

@@ -1,7 +1,7 @@
 resource "aws_cloudwatch_log_group" "ecs_execute_command" {
   count             = var.enable_execute_command_logging ? 1 : 0
   name              = "/ecs/execute-command/${var.cluster_name}"
-  retention_in_days = 7
+  retention_in_days = var.execute_command_log_retention_days
 
   tags = merge(var.tags, {
     Name = "${var.cluster_name}-execute-command-logs"
@@ -48,8 +48,8 @@ resource "aws_security_group" "ecs_instance" {
   }
 
   ingress {
-    from_port   = 32768
-    to_port     = 65535
+    from_port   = var.ecs_dynamic_port_range_from
+    to_port     = var.ecs_dynamic_port_range_to
     protocol    = "tcp"
     cidr_blocks = [data.aws_vpc.selected.cidr_block]
     description = "Allow dynamic port range for ECS tasks"
@@ -73,8 +73,8 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
     for_each = contains(var.launch_types, "FARGATE") ? [1] : []
     content {
       capacity_provider = "FARGATE"
-      weight            = contains(var.launch_types, "EC2") ? 1 : 2
-      base              = 0
+      weight            = var.fargate_capacity_provider_weight
+      base              = var.fargate_capacity_provider_base
     }
   }
 
@@ -82,8 +82,8 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
     for_each = contains(var.launch_types, "FARGATE") ? [1] : []
     content {
       capacity_provider = "FARGATE_SPOT"
-      weight            = 1
-      base              = 0
+      weight            = var.fargate_spot_capacity_provider_weight
+      base              = var.fargate_spot_capacity_provider_base
     }
   }
 
@@ -91,8 +91,8 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
     for_each = contains(var.launch_types, "EC2") ? [1] : []
     content {
       capacity_provider = aws_ecs_capacity_provider.ec2[0].name
-      weight            = contains(var.launch_types, "FARGATE") ? 2 : 1
-      base              = 1
+      weight            = var.ec2_capacity_provider_weight
+      base              = var.ec2_capacity_provider_base
     }
   }
 

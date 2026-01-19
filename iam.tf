@@ -1,31 +1,3 @@
-resource "aws_iam_role" "ecs_cluster_role" {
-  count = contains(var.launch_types, "EC2") ? 1 : 0
-  name  = "${var.cluster_name}-ecs-cluster-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = merge(var.tags, {
-    Name = "${var.cluster_name}-ecs-cluster-role"
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_cluster_role_policy" {
-  count      = contains(var.launch_types, "EC2") ? 1 : 0
-  role       = aws_iam_role.ecs_cluster_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSServiceRolePolicy"
-}
-
 resource "aws_iam_role" "ecs_instance_role" {
   count = contains(var.launch_types, "EC2") ? 1 : 0
   name  = "${var.cluster_name}-ecs-instance-role"
@@ -68,34 +40,6 @@ resource "aws_iam_instance_profile" "ecs_instance_profile" {
   tags = merge(var.tags, {
     Name = "${var.cluster_name}-ecs-instance-profile"
   })
-}
-
-resource "aws_iam_role" "ecs_autoscaling_role" {
-  count = contains(var.launch_types, "EC2") ? 1 : 0
-  name  = "${var.cluster_name}-ecs-autoscaling-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "application-autoscaling.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = merge(var.tags, {
-    Name = "${var.cluster_name}-ecs-autoscaling-role"
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_autoscaling_role_policy" {
-  count      = contains(var.launch_types, "EC2") ? 1 : 0
-  role       = aws_iam_role.ecs_autoscaling_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSServiceRolePolicy"
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {

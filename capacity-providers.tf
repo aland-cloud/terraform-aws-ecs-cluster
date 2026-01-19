@@ -9,9 +9,9 @@ resource "aws_ecs_capacity_provider" "ec2" {
     managed_scaling {
       status          = "ENABLED"
       target_capacity = var.target_capacity_percentage
-      minimum_scaling_step_size = 1
-      maximum_scaling_step_size = 100
-      instance_warmup_period    = 300
+      minimum_scaling_step_size = var.minimum_scaling_step_size
+      maximum_scaling_step_size = var.maximum_scaling_step_size
+      instance_warmup_period    = var.instance_warmup_period
     }
   }
 
