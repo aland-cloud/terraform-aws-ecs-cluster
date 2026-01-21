@@ -61,31 +61,6 @@ EOF
 echo "install cloudwatch logs agent"
 yum install -y awslogs
 
-# Create awslogs config (SOC2-friendly: per-instance streamseams by instance-id)
-cat >/etc/awslogs/awslogs.conf <<EOF
-[general]
-state_file = /var/lib/awslogs/agent-state
-
-[/var/log/messages]
-file = /var/log/messages
-log_group_name = /ecs/ec2/system
-log_stream_name = {instance_id}/messages
-datetime_format = %b %d %H:%M:%S
-
-[/var/log/cloud-init-output.log]
-file = /var/log/cloud-init-output.log
-log_group_name = /ecs/ec2/cloud-init
-log_stream_name = {instance_id}/cloud-init
-EOF
-
-# Ensure region in awscli conf
-if [ -n "$${region:-}" ] && [ -f /etc/awslogs/awscli.conf ]; then
-  sed -i "s/^region = .*/region = $region/g" /etc/awslogs/awscli.conf || true
-fi
-
-systemctl enable awslogsd
-systemctl restart awslogsd
-
 echo "get instance id and region"
 TOKEN=$(curl -sS -X PUT "http://169.254.169.254/latest/api/token" \
   -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" || true)
@@ -99,10 +74,33 @@ region=$(curl -sS -H "X-aws-ec2-metadata-token: $TOKEN" \
 echo "instance_id is $${instance_id:-unknown}"
 echo "region is $${region:-unknown}"
 
-# Update awslogs region if config exists
+# Ensure region in awscli conf
 if [ -n "$${region:-}" ] && [ -f /etc/awslogs/awscli.conf ]; then
   sed -i "s/^region = .*/region = $region/g" /etc/awslogs/awscli.conf || true
 fi
+
+# Main config (minimal)
+cat >/etc/awslogs/awslogs.conf <<'EOF'
+[general]
+state_file = /var/lib/awslogs/agent-state
+EOF
+
+# Additional configs dir used by awslogsd: /etc/awslogs/config
+mkdir -p /etc/awslogs/config
+
+# IMPORTANT: use real instance_id in stream name (no {instance_id} template)
+cat >/etc/awslogs/config/ecs-ec2.conf <<EOF
+[/var/log/messages]
+file = /var/log/messages
+log_group_name = /ecs/ec2/system
+log_stream_name = $instance_id/messages
+datetime_format = %b %d %H:%M:%S
+
+[/var/log/cloud-init-output.log]
+file = /var/log/cloud-init-output.log
+log_group_name = /ecs/ec2/cloud-init
+log_stream_name = $instance_id/cloud-init
+EOF
 
 systemctl enable awslogsd
 systemctl restart awslogsd
