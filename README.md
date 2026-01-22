@@ -81,6 +81,8 @@ module "ecs_cluster" {
   enable_container_insights        = true
   enable_execute_command_logging   = true
   execute_command_log_retention_days = 14
+  system_logs_retention_days       = 14
+  cloud_init_logs_retention_days   = 14
   
   # Security Group Configuration
   ecs_dynamic_port_range_from      = 32768
@@ -156,6 +158,8 @@ module "ecs_cluster" {
 | enable_container_insights | Enable CloudWatch Container Insights for the cluster | `bool` | `false` | no |
 | enable_execute_command_logging | Enable execute command logging to CloudWatch | `bool` | `false` | no |
 | execute_command_log_retention_days | Number of days to retain execute command logs in CloudWatch | `number` | `7` | no |
+| system_logs_retention_days | Number of days to retain system logs for instance id | `number` | `7` | no |
+| cloud_init_logs_retention_days | Number of days to retain cloud-init logs in CloudWatch | `number` | `7` | no |
 
 ### Security Group Configuration
 
@@ -250,8 +254,8 @@ You can customize these values using the capacity provider strategy variables to
 ## Monitoring and Logging
 
 - **Container Insights**: Optional CloudWatch Container Insights for cluster-level metrics
-- **Execute Command Logging**: Optional logging of ECS execute commands to CloudWatch
-- **Instance Logs**: EC2 instances send system and ECS agent logs to CloudWatch
+- **Execute Command Logging**: Optional logging of ECS execute commands to CloudWatch with configurable retention
+- **Instance Logs**: EC2 instances automatically send system logs and cloud-init logs to dedicated CloudWatch log groups (`/ecs/ec2/system` and `/ecs/ec2/cloud-init`) with configurable retention periods
 
 ## License
 

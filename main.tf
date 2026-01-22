@@ -32,6 +32,8 @@ resource "aws_ecs_cluster" "main" {
   tags = merge(var.tags, {
     Name = var.cluster_name
   })
+
+  depends_on = [aws_cloudwatch_log_group.system_logs, aws_cloudwatch_log_group.cloud_init_logs]
 }
 
 resource "aws_security_group" "ecs_instance" {

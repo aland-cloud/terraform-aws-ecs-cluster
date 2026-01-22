@@ -88,18 +88,17 @@ EOF
 # Additional configs dir used by awslogsd: /etc/awslogs/config
 mkdir -p /etc/awslogs/config
 
-# IMPORTANT: use real instance_id in stream name (no {instance_id} template)
 cat >/etc/awslogs/config/ecs-ec2.conf <<EOF
 [/var/log/messages]
 file = /var/log/messages
 log_group_name = /ecs/ec2/system
-log_stream_name = $instance_id/messages
+log_stream_name = $instance_id
 datetime_format = %b %d %H:%M:%S
 
 [/var/log/cloud-init-output.log]
 file = /var/log/cloud-init-output.log
 log_group_name = /ecs/ec2/cloud-init
-log_stream_name = $instance_id/cloud-init
+log_stream_name = $instance_id
 EOF
 
 systemctl enable awslogsd

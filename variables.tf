@@ -104,6 +104,28 @@ variable "execute_command_log_retention_days" {
   }
 }
 
+variable "system_logs_retention_days" {
+  description = "Number of days to retain system logs for instance id"
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.system_logs_retention_days > 0
+    error_message = "Log retention days must be greater than 0."
+  }
+}
+
+variable "cloud_init_logs_retention_days" {
+  description = "Number of days to retain cloud-init logs in CloudWatch"
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.cloud_init_logs_retention_days > 0
+    error_message = "Log retention days must be greater than 0."
+  }
+}
+
 
 # Security Group Configuration
 variable "ecs_dynamic_port_range_from" {
