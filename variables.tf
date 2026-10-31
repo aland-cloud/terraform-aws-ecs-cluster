@@ -13,11 +13,6 @@ variable "subnet_ids" {
   description = "List of subnet IDs for the Auto Scaling Group (required when EC2 launch type is enabled)"
   type        = list(string)
   default     = []
-  
-  validation {
-    condition     = !contains(var.launch_types, "EC2") || length(var.subnet_ids) > 0
-    error_message = "subnet_ids must be provided when EC2 launch type is enabled."
-  }
 }
 
 variable "launch_types" {

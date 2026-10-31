@@ -1,17 +1,7 @@
-data "aws_ami" "ecs_optimized" {
-  count       = contains(var.launch_types, "EC2") ? 1 : 0
-  most_recent = true
-  owners      = ["amazon"]
+data "aws_ssm_parameter" "ecs_optimized_ami" {
+  count = contains(var.launch_types, "EC2") ? 1 : 0
 
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
-  }
-
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
+  name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
 }
 
 data "aws_vpc" "selected" {
