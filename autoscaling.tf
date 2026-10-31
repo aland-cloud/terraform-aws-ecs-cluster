@@ -3,7 +3,7 @@ resource "aws_launch_template" "ecs" {
   name        = "${var.cluster_name}-ecs-launch-template"
   description = "Launch template for ECS EC2 instances in ${var.cluster_name}"
 
-  image_id      = data.aws_ami.ecs_optimized[0].id
+  image_id = data.aws_ssm_parameter.ecs_optimized_ami[0].value
   instance_type = var.ec2_instance_type
 
   vpc_security_group_ids = concat(
@@ -66,16 +66,18 @@ resource "aws_autoscaling_group" "ecs" {
 
   launch_template {
     id      = aws_launch_template.ecs[0].id
-    version = "$Latest"
+    version = aws_launch_template.ecs[0].latest_version
   }
 
   capacity_rebalance = true
 
   instance_refresh {
     strategy = "Rolling"
+
     preferences {
-      min_healthy_percentage = var.asg_instance_refresh_min_healthy_percentage
-      instance_warmup        = var.instance_warmup_period
+      min_healthy_percentage       = var.asg_instance_refresh_min_healthy_percentage
+      instance_warmup              = var.instance_warmup_period
+      scale_in_protected_instances = "Refresh"
     }
   }
 
@@ -106,6 +108,15 @@ resource "aws_autoscaling_group" "ecs" {
 
   lifecycle {
     create_before_destroy = true
+
+    ignore_changes = [
+      desired_capacity
+    ]
+
+    precondition {
+      condition     = length(var.subnet_ids) > 0
+      error_message = "subnet_ids must contain at least one subnet when EC2 launch type is enabled."
+    }
   }
 }
 
